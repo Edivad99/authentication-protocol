@@ -1,24 +1,17 @@
 import os
-import random
-import sys
+import pickle
 
-class SecureVault:
+N = 10 # n keys
+M = 32 # m bits each keys
 
-  N = 10 # n keys
-  M = 16 # m bits each keys
+def load_secure_vault() -> list[bytes]:
+  with open("secure_vault.sv", 'rb') as f:
+    return pickle.load(f)
 
-  def __init__(self):
-    random.seed(42)
-    self.secure_vault = []
+def regen_secure_vault():
+  secure_vault = []
+  for _ in range(N):
+    secure_vault.append(os.urandom(M))
 
-  def generate_secure_vault(self):
-    # generate a key of length m bits
-    key = os.urandom(self.M)
-    # calculate the size of key
-    key_size = len(key)
-    print(f"key_size: {key_size}")
-    print(f"key: {key}")
-
-    for _ in range(self.N):
-      self.secure_vault.append([random.randint(0, 255) for _ in range(self.M)])
-    return self.secure_vault
+  with open("secure_vault.sv", "wb") as f:
+    pickle.dump(secure_vault, f, pickle.HIGHEST_PROTOCOL)

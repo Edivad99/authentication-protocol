@@ -1,5 +1,6 @@
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import random
+import base64
+from cryptography.fernet import Fernet
 
 def covert_str_list_to_int_list(x1: list[str]) -> list[int]:
   x1 = x1.split(", ")
@@ -8,28 +9,27 @@ def covert_str_list_to_int_list(x1: list[str]) -> list[int]:
   x1 = [int(x) for x in x1]
   return x1
 
-def xor(a: list[int], b: list[int]) -> list[int]:
-  return [i ^ j for i, j in zip(a, b)]
+def xor(a: bytes, b: bytes) -> bytes:
+  return bytes([_a ^ _b for _a, _b in zip(a, b)])
 
+def list_xor(a: list[bytes]) -> bytes:
+  result = a[0]
+  for i in range(1, len(a)):
+    result = xor(result, a[i])
+  return result
 
 def encrypt(key: bytes, plaintext: bytes) -> bytes:
-  iv = os.urandom(16)
-  cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-  encryptor = cipher.encryptor()
-  ct = encryptor.update(plaintext) + encryptor.finalize()
-  return ct
+  key = base64.urlsafe_b64decode(key)
+  f = Fernet(key)
+  return f.encrypt(plaintext)
 
 def decrypt(key: bytes, ciphertext: bytes) -> bytes:
-  cipher = Cipher(algorithms.AES(key), modes.ECB())
-  decryptor = cipher.decryptor()
-  pt = decryptor.update(ciphertext) + decryptor.finalize()
-  return pt
+  key = base64.urlsafe_b64encode(key)
+  f = Fernet(key)
+  return f.decrypt(ciphertext)
 
-
-""" key = os.urandom(32)
-iv = os.urandom(16)
-cipher = Cipher(algorithms.AES(key))
-encryptor = cipher.encryptor()
-ct = encryptor.update(b"a secret message") + encryptor.finalize()
-decryptor = cipher.decryptor()
-decryptor.update(ct) + decryptor.finalize() """
+def generate_challenge(secure_vault_n : int) -> tuple[list[int], int]:
+  p = random.randint(1, secure_vault_n - 1)
+  C = random.sample(range(secure_vault_n), p)
+  r = random.randint(1, 255)
+  return C, r
