@@ -1,7 +1,7 @@
 import socket
 import random
 import secure_vault
-from util import covert_str_list_to_int_list, list_xor, xor, encrypt, decrypt, generate_challenge
+from util import covert_str_list_to_int_list, list_xor, xor, encrypt, decrypt, generate_challenge, generate_session_key
 
 random.seed(1)
 
@@ -60,7 +60,7 @@ def main():
             print("Errore: r1 non corrisponde")
             return
           
-          t1 = int(payload.split("#")[1])
+          t1 = payload.split("#")[1]
           C2 = covert_str_list_to_int_list(payload.split("#")[2])
           r2 = int(payload.split("#")[3])
           print(f"t1: {t1}")
@@ -69,10 +69,10 @@ def main():
           print(f"k2: {k2}")
           print(f"k2_len: {len(k2)}")
           print(f"str(t1).encode_len: {len(str(t1).encode())}")
-          xor_result = xor(k2, str(t1).encode())
+          xor_result = xor(k2, t1.encode())
           print(f"xor_result: {xor_result}")
 
-          t2 = random.randint(0, 255)
+          t2 = generate_session_key()
           payload_M4 = f"{r2}#{t2}"
           print(f"payload: {payload_M4}")
           M4 = encrypt(xor_result, payload_M4.encode())

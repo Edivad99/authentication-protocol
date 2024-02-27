@@ -1,5 +1,7 @@
 import random
 import base64
+import os
+import secure_vault
 from cryptography.fernet import Fernet
 
 def covert_str_list_to_int_list(x1: list[str]) -> list[int]:
@@ -33,3 +35,6 @@ def generate_challenge(secure_vault_n : int) -> tuple[list[int], int]:
   C = random.sample(range(secure_vault_n), p)
   r = random.randint(1, 255)
   return C, r
+
+def generate_session_key() -> int:
+  return os.urandom(secure_vault.M)
