@@ -36,5 +36,5 @@ def generate_challenge(secure_vault_n : int) -> tuple[list[int], int]:
   r = random.randint(1, 255)
   return C, r
 
-def generate_session_key() -> int:
+def generate_session_key() -> bytes:
   return os.urandom(secure_vault.M)

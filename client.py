@@ -3,6 +3,8 @@ import uuid
 import random
 import secure_vault
 from util import covert_str_list_to_int_list, xor, encrypt, decrypt, generate_challenge, list_xor, generate_session_key
+from socket_util import SocketUtil
+
 
 random.seed(42)
 
@@ -16,20 +18,14 @@ def main():
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
     client_socket.connect((SERVER_HOST, SERVER_PORT))
 
+    socket_util = SocketUtil(client_socket)
+
     K = secure_vault.load_secure_vault()
 
     # Invia i dati al server
-    M1 = str(ID) + "#" + str(SESSION_ID)
-    client_socket.sendall(str(M1).encode())
+    socket_util.sendM1(ID, SESSION_ID)
     #------------------------------------------------
-
-    data_received = client_socket.recv(1024)
-
-    M2 = data_received.decode()
-    print(f"M2: {M2}")
-    C1 = covert_str_list_to_int_list(M2.split("#")[0])
-    print(f"C1: {C1}")
-    r1 = int(M2.split("#")[1])
+    C1, r1 = socket_util.receiveM2()
 
     # First, it generates a temporary key k1 of size m bits by performing 
     # XOR operation on all the keys whose indices are in C1.
@@ -43,15 +39,32 @@ def main():
     # a session key t.
     t1 = generate_session_key()
     # perform shared key encryption on r1 || t1 using k1 as the encryption key
-    concat = (str(r1) + str(t1)).encode()
-    print(f"concat: {concat}")
-    #challenge_response = encrypt(k1, concat)
     C2, r2 = generate_challenge(secure_vault.N)
-    
-    payload = f"{r1}#{t1}#{C2}#{r2}"
+    payload = f"{r1}#{list(t1)}#{C2}#{r2}"
     print(f"payload: {payload}")
     M3 = encrypt(k1, payload.encode())
-    client_socket.sendall(M3)
+    socket_util.sendM3(M3)
+    #------------------------------------------------
+    M4 = socket_util.receiveM4()
+    print(f"M4: {M4}")
+    k2 = list_xor([K[i] for i in C2])
+    print(f"k2: {k2}")
+    t1 = bytes(str(list(t1)), 'utf-8')
+    xor_result = xor(k2, t1)
+    print(f"t1: {t1}")
+    payload = decrypt(xor_result, M4).decode()
+    print(f"payload: {payload}")
+
+    if (int(payload.split("#")[0]) != r2):
+      print("Errore: r2 non corrisponde")
+      return
+    t2 = payload.split("#")[1]
+    t2 = bytes(t2, 'utf-8')
+    print(type(t2))
+    print(f"t2: {t2}")
+    
+    t = xor(t1, t2)
+    print(f"t: {t}")
 
 
 if __name__ == "__main__":

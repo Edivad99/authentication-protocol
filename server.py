@@ -1,6 +1,7 @@
 import socket
 import random
 import secure_vault
+from socket_util import SocketUtil
 from util import covert_str_list_to_int_list, list_xor, xor, encrypt, decrypt, generate_challenge, generate_session_key
 
 random.seed(1)
@@ -19,64 +20,62 @@ def main():
       # Accetta la connessione
       conn, addr = server_socket.accept()
       with conn:
+        socket_util = SocketUtil(conn)
         print(f"Connessione accettata da {addr}")
-        while True:
-          data = conn.recv(1024)
-          if not data:
-            break
-          M1 = data.decode()
-          print(f"Dati ricevuti dal client: {M1}")
-          ID_CLIENT = M1.split("#")[0]
-          SESSION_ID = M1.split("#")[1]
-          print(f"ID_CLIENT: {ID_CLIENT}")
-          print(f"SESSION_ID: {SESSION_ID}")
+        ID_CLIENT, SESSION_ID = socket_util.receiveM1()
+        #print(f"ID_CLIENT: {ID_CLIENT}")
+        #print(f"SESSION_ID: {SESSION_ID}")
 
-          # Check if ID_CLIENT is valid
-          if (ID_CLIENT != "16"):
-            return
-          print("ID_CLIENT valido")
+        # Check if ID_CLIENT is valid
+        if (ID_CLIENT != "16"):
+          return
+        print("ID_CLIENT valido")
 
-          # The challenge M2 contains a challenge C1 and a random number r1
-          # C1 is a set of p distinct numbers, and each number represents an 
-          # index of a key, stored in the secure vault. C1 is denoted as 
-          # {c11, c12, c13…, c1p}. The value of p should be less than n.
-          C1, r1 = generate_challenge(secure_vault.N)
-          M2 = f"{C1}#{r1}"
-          print(f"M2: {M2}")
+        # The challenge M2 contains a challenge C1 and a random number r1
+        # C1 is a set of p distinct numbers, and each number represents an 
+        # index of a key, stored in the secure vault. C1 is denoted as 
+        # {c11, c12, c13…, c1p}. The value of p should be less than n.
+        C1, r1 = generate_challenge(secure_vault.N)
+        socket_util.sendM2(C1, r1)
+        #------------------------------------------------
+        M3 = socket_util.receiveM3()
+        #print(f"M3: {M3}")
+        K = secure_vault.load_secure_vault()
+        k1 = list_xor([K[i] for i in C1])
+        #print(f"k1: {k1}")
+        payload = decrypt(k1, M3).decode()
+        #print(f"payload: {payload}")
+        # If the server retrieves r1 from the received message,
+        # it generates a response to the challenge C2.
+        if (int(payload.split("#")[0]) != r1):
+          print("Errore: r1 non corrisponde")
+          return
 
-          # Invia una risposta al client
-          conn.sendall(M2.encode())
-          #------------------------------------------------
-          M3 = conn.recv(1024)
-          print(f"M3: {M3}")
-          K = secure_vault.load_secure_vault()
-          k1 = list_xor([K[i] for i in C1])
-          print(f"k1: {k1}")
-          payload = decrypt(k1, M3).decode()
-          print(f"payload: {payload}")
-          # If the server retrieves r1 from the received message,
-          # it generates a response to the challenge C2.
-          if (int(payload.split("#")[0]) != r1):
-            print("Errore: r1 non corrisponde")
-            return
-          
-          t1 = payload.split("#")[1]
-          C2 = covert_str_list_to_int_list(payload.split("#")[2])
-          r2 = int(payload.split("#")[3])
-          print(f"t1: {t1}")
-          print(f"C2: {C2}")
-          k2 = list_xor([K[i] for i in C2])
-          print(f"k2: {k2}")
-          print(f"k2_len: {len(k2)}")
-          print(f"str(t1).encode_len: {len(str(t1).encode())}")
-          xor_result = xor(k2, t1.encode())
-          print(f"xor_result: {xor_result}")
+        t1 = payload.split("#")[1]
+        t1 = bytes(t1, 'utf-8')
+        print(type(t1))
+        print(f"t1: {t1}")
+        # cast t1 in bytes
 
-          t2 = generate_session_key()
-          payload_M4 = f"{r2}#{t2}"
-          print(f"payload: {payload_M4}")
-          M4 = encrypt(xor_result, payload_M4.encode())
-          print(f"M4: {M4}")
+        C2 = covert_str_list_to_int_list(payload.split("#")[2])
+        r2 = int(payload.split("#")[3])
+        #print(f"C2: {C2}")
+        k2 = list_xor([K[i] for i in C2])
+        #print(f"k2: {k2}")
+        xor_result = xor(k2, t1)
+        #print(f"xor_result: {xor_result}")
+
+        t2 = generate_session_key()
+        payload_M4 = f"{r2}#{list(t2)}"
+        t2 = bytes(str(list(t2)), 'utf-8')
+        print(f"t2: {t2}")
+
+        #print(f"payload: {payload_M4}")
+        M4 = encrypt(xor_result, payload_M4.encode())
+        #print(f"M4: {M4}")
+        socket_util.sendM4(M4)
+        #------------------------------------------------
+  
 
 
 
