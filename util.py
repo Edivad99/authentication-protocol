@@ -19,7 +19,7 @@ def list_xor(a: list[bytes]) -> bytes:
   return result
 
 def encrypt(key: bytes, plaintext: bytes) -> bytes:
-  key = base64.urlsafe_b64decode(key)
+  key = base64.urlsafe_b64encode(key)
   f = Fernet(key)
   return f.encrypt(plaintext)
 
