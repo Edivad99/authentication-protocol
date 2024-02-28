@@ -45,7 +45,7 @@ def main():
         #------------------------------------------------
         M3 = socket_util.receiveM3()
         #print(f"M3: {M3}")
-        K = secure_vault.load_secure_vault()
+        K = secure_vault.load_secure_vault("server")
         k1 = list_xor([K[i] for i in C1])
         #print(f"k1: {k1}")
         payload = decrypt(k1, M3).decode()
@@ -79,4 +79,4 @@ def main():
         print(f"Msg: {msg.decode()}")
 
 if __name__ == "__main__":
-    main()
+  main()

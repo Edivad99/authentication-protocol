@@ -22,7 +22,7 @@ def main():
 
     socket_util = SocketUtil(client_socket)
 
-    K = secure_vault.load_secure_vault()
+    K = secure_vault.load_secure_vault("client")
 
     # Invia i dati al server
     socket_util.sendM1(ID, SESSION_ID)
