@@ -1,7 +1,7 @@
 import socket
-import secure_vault
 import random
-from socket_util import SocketUtil
+from secure_vault import SecureVault
+from socket_helper import SocketHelper
 from util import (
     list_xor,
     xor,
@@ -25,12 +25,12 @@ def main():
     print(f"Server listening on {SERVER_HOST}:{SERVER_PORT}")
     conn, addr = server_socket.accept()
     with conn:
-      socket_util = SocketUtil(conn)
+      socket_util = SocketHelper(conn)
       print(f"Accepted connection from {addr}")
       ID_CLIENT, SESSION_ID = socket_util.receiveM1()
 
       # Check if ID_CLIENT is valid
-      if (ID_CLIENT != "16"):
+      if (ID_CLIENT != 16):
         return
       print("Valid ID_CLIENT")
 
@@ -38,11 +38,12 @@ def main():
       # C1 is a set of p distinct numbers, and each number represents an 
       # index of a key, stored in the secure vault. C1 is denoted as 
       # {c11, c12, c13…, c1p}. The value of p should be less than n.
-      C1, r1 = generate_challenge(secure_vault.N)
+      C1, r1 = generate_challenge(SecureVault.N)
       socket_util.sendM2(C1, r1)
       #------------------------------------------------
       M3 = socket_util.receiveM3()
-      K = secure_vault.load_secure_vault("server")
+      sv = SecureVault("server")
+      K = sv.load_secure_vault()
       k1 = list_xor([K[i] for i in C1])
       payload = decrypt(k1, M3).decode()
       r1_client, t1, C2, r2 = unpack_M3(payload)
@@ -62,7 +63,7 @@ def main():
       T = xor(t1, t2)
       msg = f"This is your random number {random.randint(1, 100)}".encode()
       socket_util.sendMessageEncrypted(T, msg)
-      secure_vault.update_secure_vault("server", K, msg)
+      sv.update_secure_vault(K, msg)
       conn.shutdown(socket.SHUT_RDWR)
       conn.close()
 

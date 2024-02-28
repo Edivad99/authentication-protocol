@@ -1,7 +1,7 @@
 import random
 import base64
 import os
-import secure_vault
+from secure_vault import SecureVault
 from cryptography.fernet import Fernet
 
 def covert_str_list_to_int_list(x1: str) -> list[int]:
@@ -33,7 +33,7 @@ def generate_challenge(secure_vault_n : int) -> tuple[list[int], int]:
   return C, r
 
 def generate_session_key() -> bytes:
-  return os.urandom(secure_vault.M)
+  return os.urandom(SecureVault.M)
 
 def unpack_M3(payload: str) -> tuple[int, bytes, list[int], int]:
   r1 = int(payload.split("#")[0])

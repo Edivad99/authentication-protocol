@@ -1,6 +1,6 @@
 import socket
-import secure_vault
-from socket_util import SocketUtil
+from secure_vault import SecureVault
+from socket_helper import SocketHelper
 from util import (
     list_xor,
     xor,
@@ -20,9 +20,11 @@ def main():
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
     client_socket.connect((SERVER_HOST, SERVER_PORT))
 
-    socket_util = SocketUtil(client_socket)
+    socket_util = SocketHelper(client_socket)
 
-    K = secure_vault.load_secure_vault("client")
+    sv = SecureVault("client")
+
+    K = sv.load_secure_vault()
 
     socket_util.sendM1(ID, SESSION_ID)
     #------------------------------------------------
@@ -38,7 +40,7 @@ def main():
     # a session key t.
     t1 = generate_session_key()
     # perform shared key encryption on r1 || t1 using k1 as the encryption key
-    C2, r2 = generate_challenge(secure_vault.N)
+    C2, r2 = generate_challenge(SecureVault.N)
     socket_util.sendM3(k1, r1, t1, C2, r2)
     #------------------------------------------------
     M4 = socket_util.receiveM4()
@@ -55,9 +57,9 @@ def main():
     #------------------------------------------------
     msg_server = socket_util.receiveMessageEncrypted(T)
     print(f"Msg: {msg_server.decode()}")
-    secure_vault.update_secure_vault("client", K, msg_server)
+    sv.update_secure_vault(K, msg_server)
 
 
 if __name__ == "__main__":
-  #secure_vault.regen_secure_vault()
+  #SecureVault.regen_secure_vault()
   main()

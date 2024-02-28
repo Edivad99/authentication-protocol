@@ -6,7 +6,7 @@ from util import (
     decrypt
   )
 
-class SocketUtil:
+class SocketHelper:
 
   def __init__(self, socket: socket):
     self.socket = socket
@@ -18,8 +18,8 @@ class SocketUtil:
   def receiveM1(self):
     recv = self._recv_msg()
     M1 = recv.decode()
-    id_client = M1.split("#")[0]
-    session_id = M1.split("#")[1]
+    id_client = int(M1.split("#")[0])
+    session_id = int(M1.split("#")[1])
     return id_client, session_id
 
   def sendM2(self, C1: list[int], r1: int):
@@ -58,7 +58,7 @@ class SocketUtil:
     encrypted = self._recv_msg()
     return decrypt(T, encrypted)
   
-  def _send_msg(self, msg):
+  def _send_msg(self, msg: bytes):
     # Prefix each message with a 4-byte length (network byte order)
     msg = struct.pack('>I', len(msg)) + msg
     self.socket.sendall(msg)
@@ -72,7 +72,7 @@ class SocketUtil:
     # Read the message data
     return self._recvall(msglen)
 
-  def _recvall(self, n):
+  def _recvall(self, n: int):
     # Helper function to recv n bytes or return None if EOF is hit
     data = bytearray()
     while len(data) < n:
