@@ -56,7 +56,8 @@ def main():
 
     #------------------------------------------------
     msg = socket_util.receiveMessageEncrypted(T)
-    print(f"msg: {msg.decode()}")
+    print(f"Msg: {msg.decode()}")
+    socket_util.sendMessageEncrypted(T, b"Hello from the client!")
 
 
 if __name__ == "__main__":

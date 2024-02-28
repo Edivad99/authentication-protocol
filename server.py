@@ -74,7 +74,9 @@ def main():
         socket_util.sendM4(M4)
         #------------------------------------------------
         T = xor(t1, t2)
-        socket_util.sendMessageEncrypted(T, b"Hello, world!")
+        socket_util.sendMessageEncrypted(T, b"Hello from the server!")
+        msg = socket_util.receiveMessageEncrypted(T)
+        print(f"Msg: {msg.decode()}")
 
 if __name__ == "__main__":
     main()
