@@ -2,7 +2,15 @@ import socket
 import random
 import secure_vault
 from socket_util import SocketUtil
-from util import covert_str_list_to_int_list, list_xor, xor, encrypt, decrypt, generate_challenge, generate_session_key
+from util import (
+    list_xor,
+    xor,
+    encrypt,
+    decrypt,
+    generate_challenge,
+    generate_session_key,
+    unpack_M3
+  )
 
 random.seed(1)
 
@@ -44,21 +52,14 @@ def main():
         k1 = list_xor([K[i] for i in C1])
         #print(f"k1: {k1}")
         payload = decrypt(k1, M3).decode()
-        #print(f"payload: {payload}")
+        r1_client, t1, C2, r2 = unpack_M3(payload)
+
         # If the server retrieves r1 from the received message,
         # it generates a response to the challenge C2.
-        if (int(payload.split("#")[0]) != r1):
+        if (r1_client != r1):
           print("Errore: r1 non corrisponde")
           return
 
-        t1 = payload.split("#")[1]
-        t1 = bytes(t1, 'utf-8')
-        print(type(t1))
-        print(f"t1: {t1}")
-        # cast t1 in bytes
-
-        C2 = covert_str_list_to_int_list(payload.split("#")[2])
-        r2 = int(payload.split("#")[3])
         #print(f"C2: {C2}")
         k2 = list_xor([K[i] for i in C2])
         #print(f"k2: {k2}")
@@ -67,19 +68,16 @@ def main():
 
         t2 = generate_session_key()
         payload_M4 = f"{r2}#{list(t2)}"
-        t2 = bytes(str(list(t2)), 'utf-8')
-        print(f"t2: {t2}")
+        #t2 = bytes(str(list(t2)), 'utf-8')
+        #print(f"t2: {t2}")
 
         #print(f"payload: {payload_M4}")
         M4 = encrypt(xor_result, payload_M4.encode())
         #print(f"M4: {M4}")
         socket_util.sendM4(M4)
         #------------------------------------------------
-  
-
-
-
-
+        T = xor(t1, t2)
+        socket_util.sendMessageEncrypted(T, b"Hello, world!")
 
 if __name__ == "__main__":
     main()
