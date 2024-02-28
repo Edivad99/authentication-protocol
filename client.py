@@ -14,7 +14,7 @@ def main():
   SERVER_HOST = '127.0.0.1'
   SERVER_PORT = 12345
 
-  ID = 16 #uuid.uuid4()
+  ID = 16
   SESSION_ID = 1
 
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
@@ -24,7 +24,6 @@ def main():
 
     K = secure_vault.load_secure_vault("client")
 
-    # Invia i dati al server
     socket_util.sendM1(ID, SESSION_ID)
     #------------------------------------------------
     C1, r1 = socket_util.receiveM2()
@@ -44,20 +43,19 @@ def main():
     #------------------------------------------------
     M4 = socket_util.receiveM4()
     k2 = list_xor([K[i] for i in C2])
-    xor_result = xor(k2, t1)
-    payload = decrypt(xor_result, M4).decode()
+    payload = decrypt(xor(k2, t1), M4).decode()
 
     r2_server, t2 = unpack_M4(payload)
 
     if (r2_server != r2):
-      print("Errore: r2 non corrisponde")
+      print("Error: r2 mismatch")
       return
     T = xor(t1, t2)
 
     #------------------------------------------------
-    msg = socket_util.receiveMessageEncrypted(T)
-    print(f"Msg: {msg.decode()}")
-    socket_util.sendMessageEncrypted(T, b"Hello from the client!")
+    msg_server = socket_util.receiveMessageEncrypted(T)
+    print(f"Msg: {msg_server.decode()}")
+    secure_vault.update_secure_vault("client", K, msg_server)
 
 
 if __name__ == "__main__":

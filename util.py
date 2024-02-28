@@ -4,8 +4,6 @@ import os
 import secure_vault
 from cryptography.fernet import Fernet
 
-random.seed(42)
-
 def covert_str_list_to_int_list(x1: str) -> list[int]:
   return [int(x) for x in x1.strip("][").split(", ")]
 

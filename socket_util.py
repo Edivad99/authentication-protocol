@@ -44,12 +44,10 @@ class SocketUtil:
     return M3
 
   def sendM4(self, M4: bytes):
-    print(f"len(M4): {len(M4)}") #TODO: remove
     self._send_msg(M4)
 
   def receiveM4(self):
     M4 = self._recv_msg()
-    print(f"len(M4): {len(M4)}") #TODO: remove
     return M4
 
   def sendMessageEncrypted(self, T: bytes, message: bytes):
