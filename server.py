@@ -1,5 +1,4 @@
 import socket
-import random
 import secure_vault
 from socket_util import SocketUtil
 from util import (
@@ -11,8 +10,6 @@ from util import (
     generate_session_key,
     unpack_M3
   )
-
-random.seed(1)
 
 def main():
   SERVER_HOST = '127.0.0.1'
