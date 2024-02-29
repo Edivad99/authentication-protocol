@@ -5,8 +5,8 @@ import hashlib
 
 class SecureVault:
 
-  N = 10 # n keys
-  M = 32 # m bits each keys
+  N = 4 # n keys
+  M = int(256 / 8) # m bits each keys
 
   def __init__(self, type: str):
     self.type = type

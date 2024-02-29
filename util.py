@@ -1,8 +1,8 @@
 import random
-import base64
 import os
 from secure_vault import SecureVault
-from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 def covert_str_list_to_int_list(x1: str) -> list[int]:
   return [int(x) for x in x1.strip("][").split(", ")]
@@ -16,15 +16,26 @@ def list_xor(a: list[bytes]) -> bytes:
     result = xor(result, a[i])
   return result
 
+def pad(s: bytes) -> bytes:
+  BLOCK_SIZE = SecureVault.M
+  return s + ((BLOCK_SIZE - len(s) % BLOCK_SIZE) * chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)).encode()
+
+def unpad(s: bytes) -> bytes:
+  return s[0 : -s[-1]]
+
 def encrypt(key: bytes, plaintext: bytes) -> bytes:
-  key = base64.urlsafe_b64encode(key)
-  f = Fernet(key)
-  return f.encrypt(plaintext)
+  iv = b"0" * SecureVault.M
+  cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+  encryptor = cipher.encryptor()
+  ct = encryptor.update(pad(plaintext)) + encryptor.finalize()
+  return ct
 
 def decrypt(key: bytes, ciphertext: bytes) -> bytes:
-  key = base64.urlsafe_b64encode(key)
-  f = Fernet(key)
-  return f.decrypt(ciphertext)
+  iv = b"0" * SecureVault.M
+  cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
+  decryptor = cipher.decryptor()
+  decrypted = decryptor.update(ciphertext)
+  return unpad(decrypted)
 
 def generate_challenge(secure_vault_n : int) -> tuple[list[int], int]:
   p = random.randint(1, secure_vault_n - 1)
