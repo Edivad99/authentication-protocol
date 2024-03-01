@@ -15,9 +15,9 @@ class SecureVault:
     with open(f"secure_vault_{self.type}.sv", 'rb') as f:
       return pickle.load(f)
 
-  def update_secure_vault(self, secure_vault: list[bytes], key: bytes):
+  def update_secure_vault(self, key: bytes):
     new_secure_vault = []
-    for element in secure_vault:
+    for element in self.load_secure_vault():
       new_secure_vault.append(hmac.new(key, element, hashlib.sha256).digest())
     with open(f"secure_vault_{self.type}.sv", "wb") as f:
       pickle.dump(new_secure_vault, f, pickle.HIGHEST_PROTOCOL)

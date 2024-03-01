@@ -63,7 +63,7 @@ def main():
       T = xor(t1, t2)
       msg = f"This is your random number {random.randint(1, 100)}".encode()
       socket_util.sendMessageEncrypted(T, msg)
-      sv.update_secure_vault(K, msg)
+      sv.update_secure_vault(msg)
       conn.shutdown(socket.SHUT_RDWR)
       conn.close()
 
